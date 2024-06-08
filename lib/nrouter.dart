@@ -24,24 +24,26 @@ class ParserAndBuilder<Parsed, Raw> {
       List<ParserAndBuilder<Parsed, Raw>> parsers) {
     return ParserAndBuilder<Parsed, Raw>.custom(
       parser: (pathSegment) {
+        final errors = <Object>[];
         for (final parser in parsers) {
           try {
             return parser.parser(pathSegment);
           } catch (e) {
-            // ignore
+            errors.add(e);
           }
         }
-        throw Exception('No parser matched $pathSegment');
+        throw Exception('No parser matched $pathSegment $errors');
       },
       builder: (value) {
+        final errors = <Object>[];
         for (final parser in parsers) {
           try {
             return parser.builder(value);
           } catch (e) {
-            // ignore
+            errors.add(e);
           }
         }
-        throw Exception('builder error $value');
+        throw Exception('builder error $value $errors');
       },
     );
   }
@@ -200,38 +202,3 @@ class ParserAndBuilder<Parsed, Raw> {
             ]),
           );
 }
-
-@immutable
-sealed class Sample {
-  const Sample();
-}
-
-@immutable
-class SampleRoot implements Sample {
-  const SampleRoot();
-}
-
-@immutable
-class SampleSetting implements Sample {
-  const SampleSetting();
-}
-
-@immutable
-class SampleUser implements Sample {
-  const SampleUser(this.id);
-
-  final int id;
-}
-
-final sample = ParserAndBuilder.oneOf<Sample, IList<String>>([
-  ParserAndBuilder.path0.map<Sample>((_) => const SampleRoot(), (_) => null),
-  ParserAndBuilder.path1(ParserAndBuilder.keyword('settings').map(
-    (_) => const SampleSetting(),
-    (_) => null,
-  )),
-  ParserAndBuilder.path2(
-    ParserAndBuilder.keyword('user'),
-    ParserAndBuilder.integer,
-  ).map<SampleUser>((prevParsed) => SampleUser(prevParsed.$2),
-      (newParsed) => (null, newParsed.id)),
-]);
