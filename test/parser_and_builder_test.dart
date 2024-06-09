@@ -34,7 +34,7 @@ class SampleUser implements Sample {
 }
 
 final sample = n.oneOf<Sample, IList<String>>(IList([
-  n.parserAndBuilderPath0.map<Sample>(
+  n.path0.map<Sample>(
       (_) => const SampleRoot(),
       (sample) => switch (sample) {
             SampleRoot() => null,

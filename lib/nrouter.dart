@@ -25,6 +25,14 @@ class _ParserAndBuilder<Parsed, ParsedInv extends _Inv<Parsed>, Raw,
         parser: (raw) => parserMap(parser(raw)),
         builder: (parsed) => builder(builderMap(parsed)),
       );
+
+  ParserAndBuilder<NewParsed, Raw> andThen<NewParsed>(
+    ParserAndBuilder<NewParsed, Parsed> parserAndBuilder,
+  ) =>
+      ParserAndBuilder<NewParsed, Raw>.custom(
+        parser: (raw) => parserAndBuilder.parser(parser(raw)),
+        builder: (parsed) => builder(parserAndBuilder.builder(parsed)),
+      );
 }
 
 ParserAndBuilder<Parsed, Raw> oneOf<Parsed, Raw>(
@@ -55,16 +63,25 @@ ParserAndBuilder<Parsed, Raw> oneOf<Parsed, Raw>(
   );
 }
 
+/// ```
+/// 12
+/// ```
 final integer = ParserAndBuilder<int, String>.custom(
   parser: (pathSegment) => int.parse(pathSegment),
   builder: (value) => value.toString(),
 );
 
+/// ```
+/// 12.34
+/// ```
 final number = ParserAndBuilder<num, String>.custom(
   parser: (pathSegment) => num.parse(pathSegment),
   builder: (value) => value.toString(),
 );
 
+/// ```
+/// abc
+/// ```
 final string = ParserAndBuilder<String, String>.custom(
   parser: (pathSegment) => pathSegment,
   builder: (value) => value,
@@ -81,7 +98,10 @@ ParserAndBuilder<Null, String> keyword(String name) =>
       builder: (_) => name,
     );
 
-final ParserAndBuilder<Null, IList<String>> parserAndBuilderPath0 =
+/// ```
+/// /
+/// ```
+final ParserAndBuilder<Null, IList<String>> path0 =
     ParserAndBuilder<Null, IList<String>>.custom(
   parser: (pathSegments) {
     if (pathSegments.isNotEmpty) {
@@ -92,6 +112,9 @@ final ParserAndBuilder<Null, IList<String>> parserAndBuilderPath0 =
   builder: (_) => const IListConst([]),
 );
 
+/// ```
+/// /segment0
+/// ```
 ParserAndBuilder<S0, IList<String>> path1<S0>(
         ParserAndBuilder<S0, String> segment0) =>
     ParserAndBuilder<S0, IList<String>>.custom(
@@ -104,6 +127,9 @@ ParserAndBuilder<S0, IList<String>> path1<S0>(
       builder: (value) => IList([segment0.builder(value)]),
     );
 
+/// ```
+/// /segment0/segment1
+/// ```
 ParserAndBuilder<(S0, S1), IList<String>> path2<S0, S1>(
   ParserAndBuilder<S0, String> segment0,
   ParserAndBuilder<S1, String> segment1,
@@ -124,6 +150,9 @@ ParserAndBuilder<(S0, S1), IList<String>> path2<S0, S1>(
       ]),
     );
 
+/// ```
+/// /segment0/segment1/segment2
+/// ```
 ParserAndBuilder<(S0, S1, S2), IList<String>> path3<S0, S1, S2>(
   ParserAndBuilder<S0, String> segment0,
   ParserAndBuilder<S1, String> segment1,
@@ -147,6 +176,9 @@ ParserAndBuilder<(S0, S1, S2), IList<String>> path3<S0, S1, S2>(
       ]),
     );
 
+/// ```
+/// /segment0/segment1/segment2/segment3
+/// ```
 ParserAndBuilder<(S0, S1, S2, S3), IList<String>> path4<S0, S1, S2, S3>(
   ParserAndBuilder<S0, String> segment0,
   ParserAndBuilder<S1, String> segment1,
@@ -179,6 +211,9 @@ ParserAndBuilder<(S0, S1, S2, S3), IList<String>> path4<S0, S1, S2, S3>(
       ]),
     );
 
+/// ```
+/// /segment0/segment1/segment2/segment3/segment4
+/// ```
 ParserAndBuilder<(S0, S1, S2, S3, S4), IList<String>> path5<S0, S1, S2, S3, S4>(
   ParserAndBuilder<S0, String> segment0,
   ParserAndBuilder<S1, String> segment1,
@@ -213,4 +248,33 @@ ParserAndBuilder<(S0, S1, S2, S3, S4), IList<String>> path5<S0, S1, S2, S3, S4>(
         segment3.builder(value.$4),
         segment4.builder(value.$5),
       ]),
+    );
+
+/// ```
+/// ?key=value
+/// ```
+ParserAndBuilder<IList<String>, IMap<String, IList<String>>> mapValue(
+  String key,
+) =>
+    ParserAndBuilder<IList<String>, IMap<String, IList<String>>>.custom(
+      parser: (map) => map.get(key)!,
+      builder: (value) => IMap({key: value}),
+    );
+
+/// ```
+/// ?key0=value0&key1=value1
+/// ```
+ParserAndBuilder<(S0, S1), IMap<String, IList<String>>> mapMarge2<S0, S1>(
+  ParserAndBuilder<S0, IMap<String, IList<String>>> parserAndBuilder0,
+  ParserAndBuilder<S1, IMap<String, IList<String>>> parserAndBuilder1,
+) =>
+    ParserAndBuilder<(S0, S1), IMap<String, IList<String>>>.custom(
+      parser: (map) => (
+        parserAndBuilder0.parser(map),
+        parserAndBuilder1.parser(map),
+      ),
+      builder: (value) => IMap({
+        ...parserAndBuilder0.builder(value.$1).unlock,
+        ...parserAndBuilder1.builder(value.$2).unlock,
+      }),
     );
