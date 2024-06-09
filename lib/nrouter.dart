@@ -7,7 +7,8 @@ typedef ParserAndBuilder<Parsed, Raw>
     = _ParserAndBuilder<Parsed, _Inv<Parsed>, Raw, _Inv<Raw>>;
 
 @immutable
-class _ParserAndBuilder<Parsed, ParsedInv, Raw, RawInv> {
+class _ParserAndBuilder<Parsed, ParsedInv extends _Inv<Parsed>, Raw,
+    RawInv extends _Inv<Raw>> {
   const _ParserAndBuilder.custom({
     required this.parser,
     required this.builder,
