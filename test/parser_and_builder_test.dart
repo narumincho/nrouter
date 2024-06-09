@@ -12,34 +12,27 @@ sealed class Sample {
 class SampleRoot implements Sample {
   const SampleRoot();
 
-  static final parserAndBuilder = n.ParserAndBuilder<Sample,
-      (IList<String>, IMap<String, IList<String>>)>.custom(
-    parser: (raw) {
-      n.path0.parser(raw.$1);
-      return const SampleRoot();
-    },
-    builder: (parsed) => switch (parsed) {
-      SampleRoot() => const (IListConst([]), IMapConst({})),
-      _ => throw Exception(),
-    },
-  );
+  static final parserAndBuilder = n.uri(n.path0, n.map0).map<Sample>(
+        (_) => const SampleRoot(),
+        (parsed) => switch (parsed) {
+          SampleRoot() => const (null, null),
+          _ => throw Exception(),
+        },
+      );
 }
 
 @immutable
 class SampleSetting implements Sample {
   const SampleSetting();
 
-  static final parserAndBuilder = n.ParserAndBuilder<Sample,
-      (IList<String>, IMap<String, IList<String>>)>.custom(
-    parser: (raw) {
-      n.path1(n.keyword('settings')).parser(raw.$1);
-      return const SampleSetting();
-    },
-    builder: (parsed) => switch (parsed) {
-      SampleSetting() => const (IListConst(['settings']), IMapConst({})),
-      _ => throw Exception(),
-    },
-  );
+  static final parserAndBuilder =
+      n.uri(n.path1(n.keyword('settings')), n.map0).map<Sample>(
+            (_) => const SampleSetting(),
+            (parsed) => switch (parsed) {
+              SampleSetting() => const (null, null),
+              _ => throw Exception(),
+            },
+          );
 }
 
 @immutable
@@ -60,47 +53,21 @@ class SampleUser implements Sample {
   @override
   int get hashCode => Object.hash(id, isEdit);
 
-  static n
-      .ParserAndBuilder<Sample, (IList<String>, IMap<String, IList<String>>)>
-      parserAndBuilder() {
-    final path = n.path2(n.keyword('user'), n.integer);
-    return n.ParserAndBuilder<Sample,
-        (IList<String>, IMap<String, IList<String>>)>.custom(
-      parser: (raw) {
-        final (_, id) = path.parser(raw.$1);
-        return SampleUser(id: id, isEdit: false);
-      },
-      builder: (parsed) => switch (parsed) {
-        SampleUser(:final id) => (
-            path.builder((null, id)),
-            const IMapConst({})
-          ),
-        _ => throw Exception(),
-      },
-    );
-  }
-
-  static n
-      .ParserAndBuilder<Sample, (IList<String>, IMap<String, IList<String>>)>
-      parserAndBuilderS() {
-    return n.andThenRaw2<Sample, (Null, int), IList<String>, IList<String>,
-        IMap<String, IList<String>>>(
-      n.ParserAndBuilder.custom(
-        parser: (raw) {
-          return SampleUser(id: raw.$1.$2, isEdit: raw.$2.isNotEmpty);
-        },
-        builder: (parsed) => switch (parsed) {
+  static final parserAndBuilder = n
+      .uri(
+        n.path2(n.keyword('user'), n.integer),
+        n.mapOptionalValue('edit'),
+      )
+      .map<Sample>(
+        (parsed) => SampleUser(id: parsed.$1.$2, isEdit: parsed.$2 != null),
+        (parsed) => switch (parsed) {
           SampleUser(:final id, :final isEdit) => (
               (null, id),
-              isEdit ? const IListConst(['true']) : const IListConst([])
+              isEdit ? '' : null,
             ),
           _ => throw Exception(),
         },
-      ),
-      n.andThenParsed2(n.path2S(), n.keyword('user'), n.integer),
-      n.mapValue('edit'),
-    );
-  }
+      );
 }
 
 @immutable
@@ -119,32 +86,26 @@ class SampleSearch implements Sample {
   @override
   int get hashCode => query.hashCode;
 
-  static final parserAndBuilder = n.ParserAndBuilder<Sample,
-      (IList<String>, IMap<String, IList<String>>)>.custom(
-    parser: (raw) {
-      n.path1(n.keyword('search')).parser(raw.$1);
-      return SampleSearch(
-        query: n.mapValue('q').parser(raw.$2).firstOrNull ?? '',
+  static final parserAndBuilder = n
+      .uri(
+        n.path1(n.keyword('search')),
+        n.mapOptionalValue('q'),
+      )
+      .map<Sample>(
+        (raw) => SampleSearch(query: raw.$2 ?? ''),
+        (parsed) => switch (parsed) {
+          SampleSearch(:final query) => (null, query),
+          _ => throw Exception(),
+        },
       );
-    },
-    builder: (parsed) => switch (parsed) {
-      SampleSearch(:final query) => (
-          const IListConst(['search']),
-          IMap({
-            'q': IList([query]),
-          })
-        ),
-      _ => throw Exception(),
-    },
-  );
 }
 
-final sample = n.uriS.andThen(n.oneOf(IList([
+final sample = n.oneOf(IList([
   SampleRoot.parserAndBuilder,
   SampleSetting.parserAndBuilder,
-  SampleUser.parserAndBuilder(),
+  SampleUser.parserAndBuilder,
   SampleSearch.parserAndBuilder,
-])));
+]));
 
 void main() {
   test('ParserAndBuilder root', () {

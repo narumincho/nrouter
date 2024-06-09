@@ -273,13 +273,45 @@ ParserAndBuilder<(S0, S1, S2, S3, S4), IList<String>> path5<S0, S1, S2, S3, S4>(
 /// ```
 /// ?key=value
 /// ```
-ParserAndBuilder<IList<String>, IMap<String, IList<String>>> mapValue(
+ParserAndBuilder<IList<String>, IMap<String, IList<String>>> mapValues(
   String key,
 ) =>
     ParserAndBuilder<IList<String>, IMap<String, IList<String>>>.custom(
-      parser: (map) => map.get(key)!,
+      parser: (map) => map.get(key) ?? const IListConst([]),
       builder: (value) => IMap({key: value}),
     );
+
+/// ```
+/// ?key=value
+/// ```
+ParserAndBuilder<String, IMap<String, IList<String>>> mapValue(
+  String key,
+) =>
+    ParserAndBuilder<String, IMap<String, IList<String>>>.custom(
+      parser: (map) => map.get(key)!.first,
+      builder: (value) => IMap({
+        key: IList([value]),
+      }),
+    );
+
+/// ```
+/// ?key=value
+/// ```
+ParserAndBuilder<String?, IMap<String, IList<String>>> mapOptionalValue(
+  String key,
+) =>
+    ParserAndBuilder<String?, IMap<String, IList<String>>>.custom(
+      parser: (map) => map.get(key)?.firstOrNull,
+      builder: (value) => IMap({
+        if (value != null) key: IList([value])
+      }),
+    );
+
+/// We do not care what query parameters are specified. No query is generated.
+final map0 = ParserAndBuilder<Null, IMap<String, IList<String>>>.custom(
+  parser: (map) => null,
+  builder: (value) => const IMapConst({}),
+);
 
 /// ```
 /// ?key0=value0&key1=value1
@@ -324,7 +356,7 @@ ParserAndBuilder<(PathSegments, Query), Uri> uri<PathSegments, Query>(
 /// ```
 /// /pathSegment0/pathSegment1?key0=value0&key1=value1
 /// ```
-final uriS =
+final uriParserAndBuilder =
     ParserAndBuilder<(IList<String>, IMap<String, IList<String>>), Uri>.custom(
   parser: (uri) => (
     IList(uri.pathSegments),
@@ -355,7 +387,7 @@ ParserAndBuilder<(T0NP, T1NP), Raw> andThenParsed2<T0NP, T0P, T1NP, T1P, Raw>(
       )),
     );
 
-ParserAndBuilder<T, (T0R, T1R)> andThenRaw2<T, T0, T1, T0R, T1R>(
+ParserAndBuilder<T, (T0R, T1R)> merge2<T, T0, T1, T0R, T1R>(
   ParserAndBuilder<T, (T0, T1)> parserAndBuilder,
   ParserAndBuilder<T0, T0R> t0ParserAndBuilder,
   ParserAndBuilder<T1, T1R> t1ParserAndBuilder,
