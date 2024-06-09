@@ -278,3 +278,40 @@ ParserAndBuilder<(S0, S1), IMap<String, IList<String>>> mapMarge2<S0, S1>(
         ...parserAndBuilder1.builder(value.$2).unlock,
       }),
     );
+
+/// ```
+/// /pathSegment0/pathSegment1?key0=value0&key1=value1
+/// ```
+ParserAndBuilder<(PathSegments, Query), Uri> uri<PathSegments, Query>(
+  ParserAndBuilder<PathSegments, IList<String>> pathSegmentsParserAndBuilder,
+  ParserAndBuilder<Query, IMap<String, IList<String>>> queryParserAndBuilder,
+) =>
+    ParserAndBuilder<(PathSegments, Query), Uri>.custom(
+      parser: (uri) => (
+        pathSegmentsParserAndBuilder.parser(IList(uri.pathSegments)),
+        queryParserAndBuilder.parser(
+          IMap(uri.queryParametersAll.map((k, v) => MapEntry(k, IList(v)))),
+        ),
+      ),
+      builder: (value) {
+        return Uri(
+          pathSegments: pathSegmentsParserAndBuilder.builder(value.$1),
+          queryParameters: queryParserAndBuilder.builder(value.$2).unlock,
+        );
+      },
+    );
+
+/// ```
+/// /pathSegment0/pathSegment1?key0=value0&key1=value1
+/// ```
+final uriS =
+    ParserAndBuilder<(IList<String>, IMap<String, IList<String>>), Uri>.custom(
+  parser: (uri) => (
+    IList(uri.pathSegments),
+    (IMap(uri.queryParametersAll.map((k, v) => MapEntry(k, IList(v))))),
+  ),
+  builder: (value) => Uri(
+    pathSegments: value.$1,
+    queryParameters: value.$2.unlock,
+  ),
+);
