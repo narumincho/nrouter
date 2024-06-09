@@ -1,6 +1,6 @@
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/material.dart';
-import 'package:nrouter/nrouter.dart';
+import 'package:nrouter/nrouter.dart' as n;
 import 'package:test/test.dart';
 
 @immutable
@@ -20,7 +20,7 @@ class SampleSetting implements Sample {
 
 @immutable
 class SampleUser implements Sample {
-  const SampleUser(this.id);
+  const SampleUser({required this.id});
 
   final int id;
 
@@ -33,20 +33,32 @@ class SampleUser implements Sample {
   int get hashCode => id.hashCode;
 }
 
-final sample = ParserAndBuilder.oneOf<Sample, IList<String>>(IList([
-  ParserAndBuilder.path0.map<Sample>((_) => const SampleRoot(),
-      (sample) => sample is SampleRoot ? null : throw Exception()),
-  ParserAndBuilder.path1(ParserAndBuilder.keyword('settings').map(
-    (_) => const SampleSetting(),
-    (newParsed) => newParsed is SampleSetting ? null : throw Exception(),
-  )),
-  ParserAndBuilder.path2(
-    ParserAndBuilder.keyword('user'),
-    ParserAndBuilder.integer,
-  ).map(
-      (prevParsed) => SampleUser(prevParsed.$2),
-      (newParsed) =>
-          newParsed is SampleUser ? (null, newParsed.id) : throw Exception()),
+final sample = n.oneOf<Sample, IList<String>>(IList([
+  n.parserAndBuilderPath0.map<Sample>(
+      (_) => const SampleRoot(),
+      (sample) => switch (sample) {
+            SampleRoot() => null,
+            _ => throw Exception(),
+          }),
+  n.path1(n.keyword('settings').map(
+        (_) => const SampleSetting(),
+        (newParsed) => switch (newParsed) {
+          SampleSetting() => null,
+          _ => throw Exception(),
+        },
+      )),
+  n
+      .path2(
+        n.keyword('user'),
+        n.integer,
+      )
+      .map(
+        (prevParsed) => SampleUser(id: prevParsed.$2),
+        (newParsed) => switch (newParsed) {
+          SampleUser(:final id) => (null, id),
+          _ => throw Exception(),
+        },
+      )
 ]));
 
 void main() {
@@ -57,14 +69,23 @@ void main() {
 
   test('ParserAndBuilder settings', () {
     expect(
-        sample.parser(const IListConst(['settings'])), const SampleSetting());
+      sample.parser(const IListConst(['settings'])),
+      const SampleSetting(),
+    );
     expect(
-        sample.builder(const SampleSetting()), const IListConst(['settings']));
+      sample.builder(const SampleSetting()),
+      const IListConst(['settings']),
+    );
   });
 
   test('ParserAndBuilder user', () {
-    expect(sample.parser(const IListConst(['user', '1'])), const SampleUser(1));
     expect(
-        sample.builder(const SampleUser(1)), const IListConst(['user', '1']));
+      sample.parser(const IListConst(['user', '1'])),
+      const SampleUser(id: 1),
+    );
+    expect(
+      sample.builder(const SampleUser(id: 1)),
+      const IListConst(['user', '1']),
+    );
   });
 }
