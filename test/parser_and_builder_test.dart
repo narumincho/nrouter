@@ -44,32 +44,63 @@ class SampleSetting implements Sample {
 
 @immutable
 class SampleUser implements Sample {
-  const SampleUser({required this.id});
+  const SampleUser({
+    required this.id,
+    required this.isEdit,
+  });
 
   final int id;
+  final bool isEdit;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is SampleUser && runtimeType == other.runtimeType && id == other.id;
+      other is SampleUser && id == other.id && isEdit == other.isEdit;
 
   @override
-  int get hashCode => id.hashCode;
+  int get hashCode => Object.hash(id, isEdit);
 
-  static final parserAndBuilder = n.ParserAndBuilder<Sample,
-      (IList<String>, IMap<String, IList<String>>)>.custom(
-    parser: (raw) {
-      final (_, id) = n.path2(n.keyword('user'), n.integer).parser(raw.$1);
-      return SampleUser(id: id);
-    },
-    builder: (parsed) => switch (parsed) {
-      SampleUser(:final id) => (
-          IList(['user', id.toString()]),
-          const IMapConst({})
-        ),
-      _ => throw Exception(),
-    },
-  );
+  static n
+      .ParserAndBuilder<Sample, (IList<String>, IMap<String, IList<String>>)>
+      parserAndBuilder() {
+    final path = n.path2(n.keyword('user'), n.integer);
+    return n.ParserAndBuilder<Sample,
+        (IList<String>, IMap<String, IList<String>>)>.custom(
+      parser: (raw) {
+        final (_, id) = path.parser(raw.$1);
+        return SampleUser(id: id, isEdit: false);
+      },
+      builder: (parsed) => switch (parsed) {
+        SampleUser(:final id) => (
+            path.builder((null, id)),
+            const IMapConst({})
+          ),
+        _ => throw Exception(),
+      },
+    );
+  }
+
+  static n
+      .ParserAndBuilder<Sample, (IList<String>, IMap<String, IList<String>>)>
+      parserAndBuilderS() {
+    return n.andThenRaw2<Sample, (Null, int), IList<String>, IList<String>,
+        IMap<String, IList<String>>>(
+      n.ParserAndBuilder.custom(
+        parser: (raw) {
+          return SampleUser(id: raw.$1.$2, isEdit: raw.$2.isNotEmpty);
+        },
+        builder: (parsed) => switch (parsed) {
+          SampleUser(:final id, :final isEdit) => (
+              (null, id),
+              isEdit ? const IListConst(['true']) : const IListConst([])
+            ),
+          _ => throw Exception(),
+        },
+      ),
+      n.andThenParsed2(n.path2S(), n.keyword('user'), n.integer),
+      n.mapValue('edit'),
+    );
+  }
 }
 
 @immutable
@@ -111,7 +142,7 @@ class SampleSearch implements Sample {
 final sample = n.uriS.andThen(n.oneOf(IList([
   SampleRoot.parserAndBuilder,
   SampleSetting.parserAndBuilder,
-  SampleUser.parserAndBuilder,
+  SampleUser.parserAndBuilder(),
   SampleSearch.parserAndBuilder,
 ])));
 
@@ -143,10 +174,10 @@ void main() {
   test('ParserAndBuilder user', () {
     expect(
       sample.parser(Uri.parse('/user/1')),
-      const SampleUser(id: 1),
+      const SampleUser(id: 1, isEdit: false),
     );
     expect(
-      sample.builder(const SampleUser(id: 1)),
+      sample.builder(const SampleUser(id: 1, isEdit: false)),
       Uri(pathSegments: ['user', '1'], queryParameters: {}),
     );
   });

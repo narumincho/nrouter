@@ -151,6 +151,26 @@ ParserAndBuilder<(S0, S1), IList<String>> path2<S0, S1>(
     );
 
 /// ```
+/// /segment0/segment1
+/// ```
+ParserAndBuilder<(String, String), IList<String>> path2S() =>
+    ParserAndBuilder<(String, String), IList<String>>.custom(
+      parser: (pathSegments) {
+        return switch (pathSegments.toList()) {
+          [final pathSegment0, final pathSegment1] => (
+              pathSegment0,
+              pathSegment1
+            ),
+          _ => throw Exception('Expected 2 path segment, got $pathSegments'),
+        };
+      },
+      builder: (value) => IList([
+        value.$1,
+        value.$2,
+      ]),
+    );
+
+/// ```
 /// /segment0/segment1/segment2
 /// ```
 ParserAndBuilder<(S0, S1, S2), IList<String>> path3<S0, S1, S2>(
@@ -315,3 +335,43 @@ final uriS =
     queryParameters: value.$2.unlock,
   ),
 );
+
+ParserAndBuilder<(T0NP, T1NP), Raw> andThenParsed2<T0NP, T0P, T1NP, T1P, Raw>(
+  ParserAndBuilder<(T0P, T1P), Raw> parserAndBuilder,
+  ParserAndBuilder<T0NP, T0P> t0ParserAndBuilder,
+  ParserAndBuilder<T1NP, T1P> t1ParserAndBuilder,
+) =>
+    ParserAndBuilder<(T0NP, T1NP), Raw>.custom(
+      parser: (raw) {
+        final parsed = parserAndBuilder.parser(raw);
+        return (
+          t0ParserAndBuilder.parser(parsed.$1),
+          t1ParserAndBuilder.parser(parsed.$2),
+        );
+      },
+      builder: (parsed) => parserAndBuilder.builder((
+        t0ParserAndBuilder.builder(parsed.$1),
+        t1ParserAndBuilder.builder(parsed.$2),
+      )),
+    );
+
+ParserAndBuilder<T, (T0R, T1R)> andThenRaw2<T, T0, T1, T0R, T1R>(
+  ParserAndBuilder<T, (T0, T1)> parserAndBuilder,
+  ParserAndBuilder<T0, T0R> t0ParserAndBuilder,
+  ParserAndBuilder<T1, T1R> t1ParserAndBuilder,
+) =>
+    ParserAndBuilder<T, (T0R, T1R)>.custom(
+      parser: (raw) {
+        return parserAndBuilder.parser((
+          t0ParserAndBuilder.parser(raw.$1),
+          t1ParserAndBuilder.parser(raw.$2),
+        ));
+      },
+      builder: (parsed) {
+        final (t0, t1) = parserAndBuilder.builder(parsed);
+        return (
+          t0ParserAndBuilder.builder(t0),
+          t1ParserAndBuilder.builder(t1),
+        );
+      },
+    );
