@@ -33,7 +33,7 @@ class SampleUser implements Sample {
   int get hashCode => id.hashCode;
 }
 
-final sample = ParserAndBuilder.oneOf<Sample, IList<String>>([
+final sample = ParserAndBuilder.oneOf<Sample, IList<String>>(IList([
   ParserAndBuilder.path0.map<Sample>((_) => const SampleRoot(),
       (sample) => sample is SampleRoot ? null : throw Exception()),
   ParserAndBuilder.path1(ParserAndBuilder.keyword('settings').map(
@@ -47,7 +47,7 @@ final sample = ParserAndBuilder.oneOf<Sample, IList<String>>([
       (prevParsed) => SampleUser(prevParsed.$2),
       (newParsed) =>
           newParsed is SampleUser ? (null, newParsed.id) : throw Exception()),
-]);
+]));
 
 void main() {
   test('ParserAndBuilder root', () {
