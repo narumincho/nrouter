@@ -1,6 +1,7 @@
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/material.dart';
 import 'package:nrouter/nrouter.dart' as n;
+import 'package:nrouter/nrouter.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,7 +16,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp.router(
       routerDelegate: NRouterDelegate<Sample>(),
       routeInformationParser: NRouterRouteInformationParser<Sample>(sample),
-      backButtonDispatcher: 3,
+      // backButtonDispatcher: ,
     );
   }
 }
@@ -123,50 +124,3 @@ final sample = n.oneOf(IList([
   SampleUser.parserAndBuilder,
   SampleSearch.parserAndBuilder,
 ]));
-
-class NRouterRouteInformationParser<T> extends RouteInformationParser<T> {
-  // ignore: library_private_types_in_public_api
-  NRouterRouteInformationParser(this.parserAndBuilder);
-
-  final n.ParserAndBuilder<T, Uri> parserAndBuilder;
-
-  @override
-  Future<T> parseRouteInformation(RouteInformation routeInformation) async {
-    return parserAndBuilder.parser(routeInformation.uri);
-  }
-
-  @override
-  RouteInformation? restoreRouteInformation(T configuration) {
-    return RouteInformation(uri: parserAndBuilder.builder(configuration));
-  }
-}
-
-class NRouterDelegate<T> extends RouterDelegate<T> {
-  @override
-  void addListener(VoidCallback listener) {
-    // TODO: implement addListener
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // TODO: implement build
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<bool> popRoute() {
-    // TODO: implement popRoute
-    throw UnimplementedError();
-  }
-
-  @override
-  void removeListener(VoidCallback listener) {
-    // TODO: implement removeListener
-  }
-
-  @override
-  Future<void> setNewRoutePath(T configuration) {
-    // TODO: implement setNewRoutePath
-    throw UnimplementedError();
-  }
-}

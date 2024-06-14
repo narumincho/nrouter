@@ -2,14 +2,14 @@ import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/material.dart';
 
 // https://github.com/eernstg/invariant_collection/blob/main/lib/src/invariant_collection.dart
-typedef _Inv<T> = T Function(T);
+typedef Inv<T> = T Function(T);
 typedef ParserAndBuilder<Parsed, Raw>
-    = _ParserAndBuilder<Parsed, _Inv<Parsed>, Raw, _Inv<Raw>>;
+    = ParserAndBuilderInner<Parsed, Inv<Parsed>, Raw, Inv<Raw>>;
 
 @immutable
-class _ParserAndBuilder<Parsed, ParsedInv extends _Inv<Parsed>, Raw,
-    RawInv extends _Inv<Raw>> {
-  const _ParserAndBuilder.custom({
+class ParserAndBuilderInner<Parsed, ParsedInv extends Inv<Parsed>, Raw,
+    RawInv extends Inv<Raw>> {
+  const ParserAndBuilderInner.custom({
     required this.parser,
     required this.builder,
   });
