@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:nrouter/parser_and_builder.dart' as n;
 import 'package:nrouter/web.dart'
-    if (dart.library.html) 'package:nrouter/no_web.dart';
+    // https://dart.dev/interop/js-interop/package-web#conditional-imports
+    if (dart.library.js_interop) 'package:nrouter/no_web.dart';
 
 export 'package:nrouter/parser_and_builder.dart';
 
@@ -38,7 +39,7 @@ class NRouterDelegate<T> extends RouterDelegate<Uri> with ChangeNotifier {
     print(('called build', current));
     return NRouter(
       routerDelegate: this,
-      child: switch (current) {
+      child: switch (locationHref()) {
         null => Scaffold(
             appBar: AppBar(
               title: const Text('nrouter error'),
