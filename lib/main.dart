@@ -1,7 +1,6 @@
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/material.dart';
 import 'package:nrouter/nrouter.dart' as n;
-import 'package:nrouter/nrouter.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,8 +13,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      routerDelegate: NRouterDelegate<Sample>(),
-      routeInformationParser: NRouterRouteInformationParser<Sample>(sample),
+      routerDelegate: n.NRouterDelegate<Sample>(
+        parserAndBuilder: sample,
+        builder: (location, context) => switch (location) {
+          SampleRoot() => location,
+          SampleSetting() => location,
+          SampleUser() => location,
+          SampleSearch() => location,
+        },
+      ),
+      routeInformationParser: n.NRouterRouteInformationParser(),
       // backButtonDispatcher: ,
     );
   }
@@ -27,8 +34,8 @@ sealed class Sample {
 }
 
 @immutable
-class SampleRoot implements Sample {
-  const SampleRoot();
+class SampleRoot extends StatelessWidget implements Sample {
+  const SampleRoot({super.key});
 
   static final parserAndBuilder = n.uri(n.path0, n.map0).map<Sample>(
         (_) => const SampleRoot(),
@@ -37,11 +44,21 @@ class SampleRoot implements Sample {
           _ => throw Exception(),
         },
       );
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('root'),
+      ),
+      body: const Text('root'),
+    );
+  }
 }
 
 @immutable
-class SampleSetting implements Sample {
-  const SampleSetting();
+class SampleSetting extends StatelessWidget implements Sample {
+  const SampleSetting({super.key});
 
   static final parserAndBuilder =
       n.uri(n.path1(n.keyword('settings')), n.map0).map<Sample>(
@@ -51,25 +68,28 @@ class SampleSetting implements Sample {
               _ => throw Exception(),
             },
           );
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('settings'),
+      ),
+      body: const Text('settings'),
+    );
+  }
 }
 
 @immutable
-class SampleUser implements Sample {
+class SampleUser extends StatelessWidget implements Sample {
   const SampleUser({
+    super.key,
     required this.id,
     required this.isEdit,
   });
 
   final int id;
   final bool isEdit;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is SampleUser && id == other.id && isEdit == other.isEdit;
-
-  @override
-  int get hashCode => Object.hash(id, isEdit);
 
   static final parserAndBuilder = n
       .uri(
@@ -86,23 +106,23 @@ class SampleUser implements Sample {
           _ => throw Exception(),
         },
       );
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('user'),
+      ),
+      body: Text('user $id ${isEdit ? 'edit' : ''}'),
+    );
+  }
 }
 
 @immutable
-class SampleSearch implements Sample {
-  const SampleSearch({required this.query});
+class SampleSearch extends StatelessWidget implements Sample {
+  const SampleSearch({super.key, required this.query});
 
   final String query;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is SampleSearch &&
-          runtimeType == other.runtimeType &&
-          query == other.query;
-
-  @override
-  int get hashCode => query.hashCode;
 
   static final parserAndBuilder = n
       .uri(
@@ -116,6 +136,16 @@ class SampleSearch implements Sample {
           _ => throw Exception(),
         },
       );
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('search'),
+      ),
+      body: Text('search $query'),
+    );
+  }
 }
 
 final sample = n.oneOf(IList([

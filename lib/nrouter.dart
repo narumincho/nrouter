@@ -1,54 +1,94 @@
 import 'package:flutter/material.dart';
 import 'package:nrouter/parser_and_builder.dart' as n;
+import 'package:nrouter/web.dart'
+    if (dart.library.html) 'package:nrouter/no_web.dart';
 
 export 'package:nrouter/parser_and_builder.dart';
 
-class NRouterRouteInformationParser<T> extends RouteInformationParser<T> {
-  NRouterRouteInformationParser(this.parserAndBuilder);
-
-  final n.ParserAndBuilder<T, Uri> parserAndBuilder;
+class NRouterRouteInformationParser extends RouteInformationParser<Uri> {
+  NRouterRouteInformationParser();
 
   @override
-  Future<T> parseRouteInformation(RouteInformation routeInformation) async {
-    return parserAndBuilder.parser(routeInformation.uri);
+  Future<Uri> parseRouteInformation(RouteInformation routeInformation) async {
+    print(('called parseRouteInformation', routeInformation.uri));
+    return routeInformation.uri;
   }
 
   @override
-  RouteInformation? restoreRouteInformation(T configuration) {
-    return RouteInformation(uri: parserAndBuilder.builder(configuration));
+  RouteInformation? restoreRouteInformation(Uri configuration) {
+    print(('called restoreRouteInformation', configuration));
+    return RouteInformation(uri: configuration);
   }
 }
 
-class NRouterDelegate<T> extends RouterDelegate<T> with ChangeNotifier {
-  T? current;
+class NRouterDelegate<T> extends RouterDelegate<Uri> with ChangeNotifier {
+  NRouterDelegate({
+    required this.parserAndBuilder,
+    required this.builder,
+  }) {
+    print('init NRouterDelegate');
+  }
+
+  Uri? current;
+  final n.ParserAndBuilder<T, Uri> parserAndBuilder;
+  Widget Function(T, BuildContext) builder;
 
   @override
   Widget build(BuildContext context) {
     print(('called build', current));
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('nrouter test'),
-      ),
-      body: Text('$current'),
+    return NRouter(
+      routerDelegate: this,
+      child: switch (current) {
+        null => Scaffold(
+            appBar: AppBar(
+              title: const Text('nrouter error'),
+            ),
+            body: const Text('current is null'),
+          ),
+        final parsed => builder(parserAndBuilder.parser(parsed), context)
+      },
     );
   }
 
   @override
-  Future<bool> popRoute() {
-    // TODO: implement popRoute
-    throw UnimplementedError();
+  Future<bool> popRoute() async {
+    print(('called popRoute', current));
+    return true;
   }
 
   @override
-  Future<void> setNewRoutePath(T configuration) async {
+  Future<void> setNewRoutePath(Uri configuration) async {
     print(('called setNewRoutePath', configuration));
     current = configuration;
   }
 
   @override
-  Future<void> setInitialRoutePath(T configuration) {
+  Future<void> setInitialRoutePath(Uri configuration) {
     print(('called setInitialRoutePath', configuration));
     current = configuration;
     return super.setInitialRoutePath(configuration);
+  }
+}
+
+class NRouter<T> extends InheritedWidget {
+  const NRouter({
+    super.key,
+    required this.routerDelegate,
+    required super.child,
+  });
+
+  final NRouterDelegate<T> routerDelegate;
+
+  static NRouter<T> of<T>(BuildContext context) {
+    final result = context.dependOnInheritedWidgetOfExactType<NRouter<T>>();
+    if (result == null) {
+      throw Exception('No NRouter found in context');
+    }
+    return result;
+  }
+
+  @override
+  bool updateShouldNotify(NRouter<T> oldWidget) {
+    return routerDelegate != oldWidget.routerDelegate;
   }
 }
