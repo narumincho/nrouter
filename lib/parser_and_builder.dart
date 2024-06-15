@@ -346,12 +346,34 @@ ParserAndBuilder<(PathSegments, Query), Uri> uri<PathSegments, Query>(
         ),
       ),
       builder: (value) {
-        return Uri(
+        return uriAbsolute(
           pathSegments: pathSegmentsParserAndBuilder.builder(value.$1),
-          queryParameters: queryParserAndBuilder.builder(value.$2).unlock,
+          queryParameters: queryParserAndBuilder.builder(value.$2),
         );
       },
     );
+
+/// `/` から始まる絶対パスを作成する
+///
+/// ```dart
+/// uriAbsolute(pathSegments: []) // '/'
+/// uriAbsolute(pathSegments: ['project', '4e00952222a74177b2586bfb89cb5ca7']) // '/project/4e00952222a74177b2586bfb89cb5ca7'
+/// uriAbsolute(pathSegments: ['path'], queryParameters: IMap({'position': IList(['left']), 'empty': IList(['']), '': IList(['emptyValue'])})) // '/path?position=left&empty&=emptyValue'
+/// ```
+///
+/// see https://zenn.dev/koji_1009/articles/d86f1bcc775af3
+Uri uriAbsolute({
+  required Iterable<String> pathSegments,
+  IMap<String, IList<String>>? queryParameters,
+}) {
+  if (pathSegments.isEmpty) {
+    return Uri(path: '/', queryParameters: queryParameters?.unlock);
+  }
+  return Uri(
+    pathSegments: ['', ...pathSegments],
+    queryParameters: queryParameters?.unlock,
+  );
+}
 
 /// ```
 /// /pathSegment0/pathSegment1?key0=value0&key1=value1

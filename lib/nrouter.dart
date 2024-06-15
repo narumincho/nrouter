@@ -39,12 +39,11 @@ class NRouterDelegate<T> extends RouterDelegate<Uri> with ChangeNotifier {
     print(('called build', current));
     return NRouter(
       routerDelegate: this,
-      child: switch (locationHref() ?? current) {
-        null => Scaffold(
-            appBar: AppBar(
-              title: const Text('nrouter error'),
+      child: switch (current) {
+        null => const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
             ),
-            body: const Text('current is null'),
           ),
         final parsed => builder(parserAndBuilder.parser(parsed), context)
       },

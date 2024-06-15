@@ -1,9 +1,13 @@
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/material.dart';
+import 'package:nrouter/main_no_web_setup.dart'
+    // https://dart.dev/interop/js-interop/package-web#conditional-imports
+    if (dart.library.js_interop) 'package:nrouter/main_web_setup.dart';
 import 'package:nrouter/nrouter.dart' as n;
 import 'package:url_launcher/link.dart';
 
 void main() {
+  setup();
   runApp(const MyApp());
 }
 
@@ -24,7 +28,7 @@ class MyApp extends StatelessWidget {
         },
       ),
       routeInformationParser: n.NRouterRouteInformationParser(),
-      // backButtonDispatcher: ,
+      // backButtonDispatcher: ?,
     );
   }
 }
@@ -52,14 +56,7 @@ class SampleRoot extends StatelessWidget implements Sample {
       appBar: AppBar(
         title: const Text('root'),
       ),
-      body: Column(children: [
-        const Text('root'),
-        Link(
-          uri: sample.builder(const SampleSetting()),
-          builder: (context, followLink) =>
-              TextButton(onPressed: followLink, child: const Text('settings')),
-        )
-      ]),
+      body: const _CommonLinks(),
     );
   }
 }
@@ -83,7 +80,7 @@ class SampleSetting extends StatelessWidget implements Sample {
       appBar: AppBar(
         title: const Text('settings'),
       ),
-      body: const Text('settings'),
+      body: const _CommonLinks(),
     );
   }
 }
@@ -119,9 +116,9 @@ class SampleUser extends StatelessWidget implements Sample {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('user'),
+        title: Text('user $id ${isEdit ? 'edit' : ''}'),
       ),
-      body: Text('user $id ${isEdit ? 'edit' : ''}'),
+      body: const _CommonLinks(),
     );
   }
 }
@@ -149,9 +146,43 @@ class SampleSearch extends StatelessWidget implements Sample {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('search'),
+        title: Text('search $query'),
       ),
-      body: Text('search $query'),
+      body: const _CommonLinks(),
+    );
+  }
+}
+
+class _CommonLinks extends StatelessWidget {
+  const _CommonLinks();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Link(
+          uri: sample.builder(const SampleSetting()),
+          builder: (context, followLink) =>
+              TextButton(onPressed: followLink, child: const Text('settings')),
+        ),
+        Link(
+          uri: sample.builder(const SampleUser(
+            id: 1,
+            isEdit: false,
+          )),
+          builder: (context, followLink) => TextButton(
+              onPressed: followLink, child: const Text('user 1 isEdit false')),
+        ),
+        Link(
+          uri: sample.builder(const SampleUser(
+            id: 1,
+            isEdit: true,
+          )),
+          builder: (context, followLink) => TextButton(
+              onPressed: followLink, child: const Text('user 1 isEdit true')),
+        ),
+      ],
     );
   }
 }

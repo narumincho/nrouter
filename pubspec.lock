@@ -140,7 +140,7 @@ packages:
     source: sdk
     version: "0.0.0"
   flutter_web_plugins:
-    dependency: transitive
+    dependency: "direct main"
     description: flutter
     source: sdk
     version: "0.0.0"
@@ -264,6 +264,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.5"
+  narumincho_util:
+    dependency: "direct main"
+    description:
+      name: narumincho_util
+      sha256: fa9712916ef42d9c8896b9831a9040317249fcbc64f069b042d41839d45a43a1
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.1"
   node_preamble:
     dependency: transitive
     description:
