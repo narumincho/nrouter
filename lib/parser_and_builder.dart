@@ -366,12 +366,12 @@ Uri uriAbsolute({
   required Iterable<String> pathSegments,
   IMap<String, IList<String>>? queryParameters,
 }) {
-  if (pathSegments.isEmpty) {
-    return Uri(path: '/', queryParameters: queryParameters?.unlock);
-  }
   return Uri(
-    pathSegments: ['', ...pathSegments],
-    queryParameters: queryParameters?.unlock,
+    path: pathSegments.isEmpty ? '/' : null,
+    pathSegments: pathSegments.isEmpty ? null : ['', ...pathSegments],
+    queryParameters: queryParameters == null || queryParameters.isEmpty
+        ? null
+        : queryParameters.unlock,
   );
 }
 

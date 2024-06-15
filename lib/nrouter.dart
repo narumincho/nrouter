@@ -78,28 +78,47 @@ class NRouterDelegate<T> extends RouterDelegate<Uri> with ChangeNotifier {
   @override
   Future<void> setNewRoutePath(Uri configuration) async {
     print(('called setNewRoutePath', configuration));
+    if (isSameLast(configuration)) {
+      print(('ignored in setNewRoutePath', history.lastOrNull, configuration));
+      return;
+    }
     history = history.add(configuration);
+  }
+
+  @override
+  Uri get currentConfiguration {
+    print(('called currentConfiguration', history));
+    return history.lastOrNull ?? Uri.parse('/');
   }
 
   // @override
   // Future<void> setInitialRoutePath(Uri configuration) {
   //   print(('called setInitialRoutePath', configuration));
-  //   current = configuration;
+  //   history = IList([configuration]);
   //   return super.setInitialRoutePath(configuration);
   // }
 
   void push(T route) {
+    print(('called push', route));
+    final newUri = parserAndBuilder.builder(route);
+    if (isSameLast(newUri)) {
+      print(('ignored in push', history.lastOrNull, newUri));
+      return;
+    }
     history = history.add(parserAndBuilder.builder(route));
     notifyListeners();
   }
 
-  void replace(T route) {
-    if (history.isEmpty) {
-      history = history.add(parserAndBuilder.builder(route));
-    } else {
-      history = history.removeLast().add(parserAndBuilder.builder(route));
+  void replace(T route, BuildContext context) {
+    if (history.isNotEmpty) {
+      history = history.removeLast();
     }
-    notifyListeners();
+    final newUri = parserAndBuilder.builder(route);
+    history = history.add(newUri);
+    Router.neglect(context, () {
+      print(('in replace Router.neglect', history));
+      notifyListeners();
+    });
   }
 
   void pop() {
@@ -111,6 +130,10 @@ class NRouterDelegate<T> extends RouterDelegate<Uri> with ChangeNotifier {
 
   bool canPop() {
     return history.length > 1;
+  }
+
+  bool isSameLast(Uri uri) {
+    return history.lastOrNull == uri;
   }
 }
 
@@ -141,8 +164,8 @@ class NRouter<T> extends InheritedWidget {
     routerDelegate.push(route);
   }
 
-  void replace(T route) {
-    routerDelegate.replace(route);
+  void replace(T route, BuildContext context) {
+    routerDelegate.replace(route, context);
   }
 
   void pop() {

@@ -132,6 +132,14 @@ class SampleUser extends StatelessWidget implements Sample {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: n.NRouter.of<Sample>(context).canPop()
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  n.NRouter.of<Sample>(context).pop();
+                },
+              )
+            : null,
         title: Text('user $id ${isEdit ? 'edit' : ''}'),
       ),
       body: const _CommonLinks(),
@@ -140,7 +148,7 @@ class SampleUser extends StatelessWidget implements Sample {
 }
 
 @immutable
-class SampleSearch extends StatelessWidget implements Sample {
+class SampleSearch extends StatefulWidget implements Sample {
   const SampleSearch({super.key, required this.query});
 
   final String query;
@@ -159,6 +167,33 @@ class SampleSearch extends StatelessWidget implements Sample {
       );
 
   @override
+  State<SampleSearch> createState() => _SampleSearchState();
+}
+
+class _SampleSearchState extends State<SampleSearch> {
+  final _controller = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    print('search query ${widget.query}');
+    _controller
+      ..text = widget.query
+      ..addListener(() {
+        print('search query ${_controller.text}');
+
+        n.NRouter.of<Sample>(context)
+            .replace(SampleSearch(query: _controller.text), context);
+      });
+  }
+
+  @override
+  void didUpdateWidget(covariant SampleSearch oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _controller.text = widget.query;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -170,9 +205,14 @@ class SampleSearch extends StatelessWidget implements Sample {
                 },
               )
             : null,
-        title: Text('search query $query'),
+        title: Text('search query ${widget.query}'),
       ),
-      body: const _CommonLinks(),
+      body: TextField(
+        controller: _controller,
+        decoration: const InputDecoration(
+          labelText: 'query',
+        ),
+      ),
     );
   }
 }
@@ -209,9 +249,23 @@ class _CommonLinks extends StatelessWidget {
         ElevatedButton(
           onPressed: () {
             n.NRouter.of<Sample>(context)
-                .push(const SampleUser(id: 2, isEdit: false));
+                .push(const SampleUser(id: 1, isEdit: false));
           },
-          child: const Text('user 2 (button)'),
+          child: const Text('push user 1'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            n.NRouter.of<Sample>(context)
+                .replace(const SampleUser(id: 1, isEdit: false), context);
+          },
+          child: const Text('replace user 1'),
+        ),
+        Link(
+          uri: sample.builder(const SampleSearch(
+            query: 'sample',
+          )),
+          builder: (context, followLink) => TextButton(
+              onPressed: followLink, child: const Text('search query sample')),
         ),
       ],
     );
