@@ -1,3 +1,5 @@
+import 'dart:async';
+
 Uri? locationHref() {
   print('called locationHref in no_web');
   return null;
@@ -5,4 +7,9 @@ Uri? locationHref() {
 
 void historyReplaceState(Uri uri) {
   print('called replace in no_web');
+}
+
+Future<void> Function() listenLocationChange(void Function(Uri) listener) {
+  print('called listen in no_web');
+  return () async {};
 }

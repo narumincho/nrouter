@@ -12,6 +12,7 @@ class NRouterRouteInformationParser extends RouteInformationParser<Uri> {
 
   @override
   Future<Uri> parseRouteInformation(RouteInformation routeInformation) async {
+    routeInformation;
     print(('called parseRouteInformation', routeInformation.uri));
     return routeInformation.uri;
   }
@@ -28,13 +29,24 @@ class NRouterDelegate<T> extends RouterDelegate<Uri> with ChangeNotifier {
     required this.parserAndBuilder,
     required this.builder,
   }) {
+    cancelListenPopEvent = listenLocationChange((uri) {
+      print('on pop $uri');
+      nextIsBrowserBack = true;
+    });
     print('init NRouterDelegate');
   }
 
   IList<Uri> history = const IListConst([]);
   final n.ParserAndBuilder<T, Uri> parserAndBuilder;
   Widget Function(T, BuildContext) builder;
-  final Key key = UniqueKey();
+  late void Function() cancelListenPopEvent;
+  bool nextIsBrowserBack = false;
+
+  @override
+  void dispose() {
+    cancelListenPopEvent();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,9 +89,22 @@ class NRouterDelegate<T> extends RouterDelegate<Uri> with ChangeNotifier {
 
   @override
   Future<void> setNewRoutePath(Uri configuration) async {
-    print(('called setNewRoutePath', configuration));
+    print(('called setNewRoutePath', configuration, nextIsBrowserBack));
     if (isSameLast(configuration)) {
       print(('ignored in setNewRoutePath', history.lastOrNull, configuration));
+      return;
+    }
+    if (nextIsBrowserBack) {
+      nextIsBrowserBack = false;
+      for (final entry in history.reversed) {
+        if (entry == configuration) {
+          return;
+        }
+        if (history.isNotEmpty) {
+          history = history.removeLast();
+        }
+      }
+
       return;
     }
     history = history.add(configuration);
@@ -109,16 +134,15 @@ class NRouterDelegate<T> extends RouterDelegate<Uri> with ChangeNotifier {
     notifyListeners();
   }
 
-  void replace(T route, BuildContext context) {
+  void replace(T route) {
     if (history.isNotEmpty) {
       history = history.removeLast();
     }
     final newUri = parserAndBuilder.builder(route);
     history = history.add(newUri);
-    Router.neglect(context, () {
-      print(('in replace Router.neglect', history));
-      notifyListeners();
-    });
+
+    print(('in replace Router.neglect', history));
+    notifyListeners();
   }
 
   void pop() {
@@ -165,7 +189,9 @@ class NRouter<T> extends InheritedWidget {
   }
 
   void replace(T route, BuildContext context) {
-    routerDelegate.replace(route, context);
+    Router.neglect(context, () {
+      routerDelegate.replace(route);
+    });
   }
 
   void pop() {

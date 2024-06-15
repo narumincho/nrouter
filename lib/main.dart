@@ -207,12 +207,18 @@ class _SampleSearchState extends State<SampleSearch> {
             : null,
         title: Text('search query ${widget.query}'),
       ),
-      body: TextField(
-        controller: _controller,
-        decoration: const InputDecoration(
-          labelText: 'query',
+      body: Column(children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: TextField(
+            controller: _controller,
+            decoration: const InputDecoration(
+              labelText: 'query',
+            ),
+          ),
         ),
-      ),
+        const _CommonLinks(),
+      ]),
     );
   }
 }
@@ -225,6 +231,11 @@ class _CommonLinks extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        Link(
+          uri: sample.builder(const SampleRoot()),
+          builder: (context, followLink) =>
+              TextButton(onPressed: followLink, child: const Text('root')),
+        ),
         Link(
           uri: sample.builder(const SampleSetting()),
           builder: (context, followLink) =>
