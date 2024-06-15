@@ -39,6 +39,7 @@ dependencies:
   fast_immutable_collections: ^10.2.4
   test: ^1.25.2
   web: ^0.5.1
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:

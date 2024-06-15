@@ -1,6 +1,7 @@
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/material.dart';
 import 'package:nrouter/nrouter.dart' as n;
+import 'package:url_launcher/link.dart';
 
 void main() {
   runApp(const MyApp());
@@ -51,7 +52,14 @@ class SampleRoot extends StatelessWidget implements Sample {
       appBar: AppBar(
         title: const Text('root'),
       ),
-      body: const Text('root'),
+      body: Column(children: [
+        const Text('root'),
+        Link(
+          uri: sample.builder(const SampleSetting()),
+          builder: (context, followLink) =>
+              TextButton(onPressed: followLink, child: const Text('settings')),
+        )
+      ]),
     );
   }
 }
