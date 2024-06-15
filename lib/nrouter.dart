@@ -1,3 +1,4 @@
+import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/material.dart';
 import 'package:nrouter/no_web.dart'
     // https://dart.dev/interop/js-interop/package-web#conditional-imports
@@ -30,46 +31,90 @@ class NRouterDelegate<T> extends RouterDelegate<Uri> with ChangeNotifier {
     print('init NRouterDelegate');
   }
 
-  Uri? current;
+  IList<Uri> history = const IListConst([]);
   final n.ParserAndBuilder<T, Uri> parserAndBuilder;
   Widget Function(T, BuildContext) builder;
+  final Key key = UniqueKey();
 
   @override
   Widget build(BuildContext context) {
-    print(('called build', current));
-    return NRouter(
-      routerDelegate: this,
-      child: switch (current) {
-        null => const Scaffold(
+    print(('called build', history));
+
+    switch (history.lastOrNull) {
+      case null:
+        // WidgetsBinding.instance.addPostFrameCallback((_) {
+        //   switch (locationHref()) {
+        //     case final uri?:
+        //       setNewRoutePath(uri);
+        //       notifyListeners();
+        //       break;
+        //   }
+        // });
+        return NRouter(
+          routerDelegate: this,
+          child: const Scaffold(
             body: Center(
               child: CircularProgressIndicator(),
             ),
           ),
-        final parsed => builder(parserAndBuilder.parser(parsed), context)
-      },
-    );
+        );
+      default:
+        return NRouter(
+          routerDelegate: this,
+          child: builder(parserAndBuilder.parser(history.lastOrNull!), context),
+        );
+    }
   }
 
   @override
   Future<bool> popRoute() async {
-    print(('called popRoute', current));
+    print(('called popRoute', history));
+    if (history.isNotEmpty) {
+      history = history.removeLast();
+    }
     return true;
   }
 
   @override
   Future<void> setNewRoutePath(Uri configuration) async {
     print(('called setNewRoutePath', configuration));
-    current = configuration;
+    history = history.add(configuration);
   }
 
-  @override
-  Future<void> setInitialRoutePath(Uri configuration) {
-    print(('called setInitialRoutePath', configuration));
-    current = configuration;
-    return super.setInitialRoutePath(configuration);
+  // @override
+  // Future<void> setInitialRoutePath(Uri configuration) {
+  //   print(('called setInitialRoutePath', configuration));
+  //   current = configuration;
+  //   return super.setInitialRoutePath(configuration);
+  // }
+
+  void push(T route) {
+    history = history.add(parserAndBuilder.builder(route));
+    notifyListeners();
+  }
+
+  void replace(T route) {
+    if (history.isEmpty) {
+      history = history.add(parserAndBuilder.builder(route));
+    } else {
+      history = history.removeLast().add(parserAndBuilder.builder(route));
+    }
+    notifyListeners();
+  }
+
+  void pop() {
+    if (canPop()) {
+      history = history.removeLast();
+      notifyListeners();
+    }
+  }
+
+  bool canPop() {
+    return history.length > 1;
   }
 }
 
+// ここの部分を riverpod を利用する形にしても良いかも
 class NRouter<T> extends InheritedWidget {
   const NRouter({
     super.key,
@@ -90,5 +135,21 @@ class NRouter<T> extends InheritedWidget {
   @override
   bool updateShouldNotify(NRouter<T> oldWidget) {
     return routerDelegate != oldWidget.routerDelegate;
+  }
+
+  void push(T route) {
+    routerDelegate.push(route);
+  }
+
+  void replace(T route) {
+    routerDelegate.replace(route);
+  }
+
+  void pop() {
+    routerDelegate.pop();
+  }
+
+  bool canPop() {
+    return routerDelegate.canPop();
   }
 }

@@ -54,6 +54,14 @@ class SampleRoot extends StatelessWidget implements Sample {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: n.NRouter.of<Sample>(context).canPop()
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  n.NRouter.of<Sample>(context).pop();
+                },
+              )
+            : null,
         title: const Text('root'),
       ),
       body: const _CommonLinks(),
@@ -78,6 +86,14 @@ class SampleSetting extends StatelessWidget implements Sample {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: n.NRouter.of<Sample>(context).canPop()
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  n.NRouter.of<Sample>(context).pop();
+                },
+              )
+            : null,
         title: const Text('settings'),
       ),
       body: const _CommonLinks(),
@@ -146,7 +162,15 @@ class SampleSearch extends StatelessWidget implements Sample {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('search $query'),
+        leading: n.NRouter.of<Sample>(context).canPop()
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  n.NRouter.of<Sample>(context).pop();
+                },
+              )
+            : null,
+        title: Text('search query $query'),
       ),
       body: const _CommonLinks(),
     );
@@ -181,6 +205,13 @@ class _CommonLinks extends StatelessWidget {
           )),
           builder: (context, followLink) => TextButton(
               onPressed: followLink, child: const Text('user 1 isEdit true')),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            n.NRouter.of<Sample>(context)
+                .push(const SampleUser(id: 2, isEdit: false));
+          },
+          child: const Text('user 2 (button)'),
         ),
       ],
     );
