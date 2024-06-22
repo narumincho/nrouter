@@ -1,5 +1,8 @@
 # nrouter
 
+Flutter 内部で Web の History API の State に {serialCount: 0, state: null}
+の構造のデータを入れていて, うまく取り出すことができない? JsAny
+から取り出せない?
 
 ## macOS log
 

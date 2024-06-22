@@ -7,31 +7,35 @@ import 'package:nrouter/parser_and_builder.dart' as n;
 
 export 'package:nrouter/parser_and_builder.dart';
 
-class NRouterRouteInformationParser extends RouteInformationParser<Uri> {
+class NRouterRouteInformationParser
+    extends RouteInformationParser<RouteInformation> {
   NRouterRouteInformationParser();
 
   @override
-  Future<Uri> parseRouteInformation(RouteInformation routeInformation) async {
-    routeInformation;
-    print(('called parseRouteInformation', routeInformation.uri));
-    return routeInformation.uri;
+  Future<RouteInformation> parseRouteInformation(
+      RouteInformation routeInformation) async {
+    return routeInformation;
   }
 
   @override
-  RouteInformation? restoreRouteInformation(Uri configuration) {
-    print(('called restoreRouteInformation', configuration));
-    return RouteInformation(uri: configuration);
+  RouteInformation? restoreRouteInformation(RouteInformation configuration) {
+    return configuration;
   }
 }
 
-class NRouterDelegate<T> extends RouterDelegate<Uri> with ChangeNotifier {
+class NRouterDelegate<T> extends RouterDelegate<RouteInformation>
+    with ChangeNotifier {
   NRouterDelegate({
     required this.parserAndBuilder,
     required this.builder,
   }) {
-    cancelListenPopEvent = listenLocationChange((uri) {
-      print('on pop $uri');
-      nextIsBrowserBack = true;
+    cancelListenPopEvent = listenLocationChange((uri, state) {
+      print('on pop $uri $state');
+      if (state != null) {
+        if (state < history.length) {
+          nextIsBrowserBack = true;
+        }
+      }
     });
     print('init NRouterDelegate');
   }
@@ -88,32 +92,35 @@ class NRouterDelegate<T> extends RouterDelegate<Uri> with ChangeNotifier {
   }
 
   @override
-  Future<void> setNewRoutePath(Uri configuration) async {
+  Future<void> setNewRoutePath(RouteInformation configuration) async {
     print(('called setNewRoutePath', configuration, nextIsBrowserBack));
-    if (isSameLast(configuration)) {
+    if (isSameLast(configuration.uri)) {
       print(('ignored in setNewRoutePath', history.lastOrNull, configuration));
       return;
     }
     if (nextIsBrowserBack) {
       nextIsBrowserBack = false;
       for (final entry in history.reversed) {
-        if (entry == configuration) {
+        if (entry == configuration.uri) {
           return;
         }
-        if (history.isNotEmpty) {
+        if (history.length > 1) {
           history = history.removeLast();
         }
       }
 
       return;
     }
-    history = history.add(configuration);
+    history = history.add(configuration.uri);
   }
 
   @override
-  Uri get currentConfiguration {
+  RouteInformation get currentConfiguration {
     print(('called currentConfiguration', history));
-    return history.lastOrNull ?? Uri.parse('/');
+    return RouteInformation(
+      uri: history.lastOrNull ?? Uri.parse('/'),
+      state: history.length - 1,
+    );
   }
 
   // @override
