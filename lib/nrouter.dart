@@ -43,7 +43,7 @@ class NRouterDelegate<T> extends RouterDelegate<RouteInformation>
   int currentIndex = 0;
   final n.ParserAndBuilder<T, Uri> parserAndBuilder;
   final bool debug;
-  Widget Function(T, BuildContext) builder;
+  Widget Function(T?, BuildContext) builder;
   late void Function() cancelListenPopEvent;
 
   @override
@@ -63,21 +63,21 @@ class NRouterDelegate<T> extends RouterDelegate<RouteInformation>
       );
     }
 
-    switch (history.elementAtOrNull(currentIndex)) {
-      case null:
-        return NRouter(
-          routerDelegate: this,
-          child: const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
-          ),
-        );
-      case final current:
-        return NRouter(
-          routerDelegate: this,
-          child: builder(parserAndBuilder.parser(current.uri), context),
-        );
+    return NRouter(
+      routerDelegate: this,
+      child: builder(currentRoute(), context),
+    );
+  }
+
+  T? currentRoute() {
+    try {
+      final uri = history.elementAtOrNull(currentIndex)?.uri;
+      if (uri == null) {
+        return null;
+      }
+      return parserAndBuilder.parser(uri);
+    } catch (e) {
+      return null;
     }
   }
 
@@ -139,12 +139,9 @@ class NRouterDelegate<T> extends RouterDelegate<RouteInformation>
   }
 
   void replace(T route) {
-    if (history.isNotEmpty) {
-      history = history.removeLast();
-    }
     final newUri = parserAndBuilder.builder(route);
     history = IList([
-      ...history.sublist(0, min(currentIndex + 1, history.length)),
+      ...history.sublist(0, min(currentIndex, history.length)),
       (uri: newUri, state: const Uuid().v4()),
     ]);
 

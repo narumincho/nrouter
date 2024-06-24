@@ -20,13 +20,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      routerDelegate: n.NRouterDelegate<Sample>(
-        parserAndBuilder: sample,
+      routerDelegate: n.NRouterDelegate<RouterPage>(
+        parserAndBuilder: parserAndBuilder,
         builder: (location, context) => switch (location) {
-          SampleRoot() => location,
-          SampleSetting() => location,
-          SampleUser() => location,
-          SampleSearch() => location,
+          RootPage() => location,
+          SettingPage() => location,
+          UserPage() => location,
+          SearchPage() => location,
           _ => Scaffold(
               appBar: AppBar(
                 title: const Text('404'),

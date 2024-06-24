@@ -16,19 +16,19 @@ class CommonLinks extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Link(
-          uri: sample.builder(const SampleRoot()),
+          uri: parserAndBuilder.builder(const RootPage()),
           builder: (context, followLink) =>
               TextButton(onPressed: followLink, child: const Text('root')),
         ),
         Link(
-          uri: sample.builder(const SampleSetting()),
+          uri: parserAndBuilder.builder(const SettingPage()),
           builder: (context, followLink) => TextButton(
             onPressed: followLink,
             child: const Text('settings'),
           ),
         ),
         Link(
-          uri: sample.builder(const SampleUser(
+          uri: parserAndBuilder.builder(const UserPage(
             id: 1,
             isEdit: false,
           )),
@@ -38,7 +38,7 @@ class CommonLinks extends StatelessWidget {
           ),
         ),
         Link(
-          uri: sample.builder(const SampleUser(
+          uri: parserAndBuilder.builder(const UserPage(
             id: 1,
             isEdit: true,
           )),
@@ -49,20 +49,20 @@ class CommonLinks extends StatelessWidget {
         ),
         ElevatedButton(
           onPressed: () {
-            n.NRouter.of<Sample>(context)
-                .push(const SampleUser(id: 1, isEdit: false));
+            n.NRouter.of<RouterPage>(context)
+                .push(const UserPage(id: 1, isEdit: false));
           },
           child: const Text('push user 1'),
         ),
         ElevatedButton(
           onPressed: () {
-            n.NRouter.of<Sample>(context)
-                .replace(const SampleUser(id: 1, isEdit: false), context);
+            n.NRouter.of<RouterPage>(context)
+                .replace(const UserPage(id: 1, isEdit: false), context);
           },
           child: const Text('replace user 1'),
         ),
         Link(
-          uri: sample.builder(const SampleSearch(
+          uri: parserAndBuilder.builder(const SearchPage(
             query: 'sample',
           )),
           builder: (context, followLink) => TextButton(

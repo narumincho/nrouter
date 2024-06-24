@@ -353,11 +353,6 @@ ParserAndBuilder<(PathSegments, Query), Uri> uri<PathSegments, Query>(
       },
     );
 
-ParserAndBuilder<Null, Uri> notFound() => ParserAndBuilder<Null, Uri>.custom(
-      parser: (_) => null,
-      builder: (_) => throw Exception('Not found'),
-    );
-
 /// `/` から始まる絶対パスを作成する
 ///
 /// ```dart

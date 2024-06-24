@@ -4,8 +4,8 @@ import 'package:nrouter/router.dart';
 import 'package:nrouter/widget/common_links.dart';
 
 @immutable
-class SampleSearch extends StatefulWidget implements Sample {
-  const SampleSearch({super.key, required this.query});
+class SearchPage extends StatefulWidget implements RouterPage {
+  const SearchPage({super.key, required this.query});
 
   final String query;
 
@@ -14,50 +14,53 @@ class SampleSearch extends StatefulWidget implements Sample {
         n.path1(n.keyword('search')),
         n.mapOptionalValue('q'),
       )
-      .map<Sample>(
-        (raw) => SampleSearch(query: raw.$2 ?? ''),
+      .map<RouterPage>(
+        (raw) => SearchPage(query: raw.$2 ?? ''),
         (parsed) => switch (parsed) {
-          SampleSearch(:final query) => (null, query),
+          SearchPage(:final query) => (null, query),
           _ => throw Exception(),
         },
       );
 
   @override
-  State<SampleSearch> createState() => _SampleSearchState();
+  State<SearchPage> createState() => _SearchPageState();
 }
 
-class _SampleSearchState extends State<SampleSearch> {
+class _SearchPageState extends State<SearchPage> {
   final _controller = TextEditingController();
 
   @override
   void initState() {
-    super.initState();
-    print('search query ${widget.query}');
+    print('search init ${widget.query}');
     _controller
       ..text = widget.query
       ..addListener(() {
         print('search query ${_controller.text}');
-
-        n.NRouter.of<Sample>(context)
-            .replace(SampleSearch(query: _controller.text), context);
+        if (widget.query != _controller.text) {
+          n.NRouter.of<RouterPage>(context)
+              .replace(SearchPage(query: _controller.text), context);
+        }
       });
+    super.initState();
   }
 
   @override
-  void didUpdateWidget(covariant SampleSearch oldWidget) {
+  void didUpdateWidget(covariant SearchPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _controller.text = widget.query;
+    if (widget.query != _controller.text) {
+      _controller.text = widget.query;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: n.NRouter.of<Sample>(context).canPop()
+        leading: n.NRouter.of<RouterPage>(context).canPop()
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () {
-                  n.NRouter.of<Sample>(context).pop();
+                  n.NRouter.of<RouterPage>(context).pop();
                 },
               )
             : null,
