@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/material.dart';
 import 'package:narumincho_util/narumincho_util.dart';
@@ -5,6 +7,7 @@ import 'package:nrouter/no_web.dart'
     // https://dart.dev/interop/js-interop/package-web#conditional-imports
     if (dart.library.js_interop) 'package:nrouter/web.dart';
 import 'package:nrouter/parser_and_builder.dart' as n;
+import 'package:uuid/uuid.dart';
 
 export 'package:nrouter/parser_and_builder.dart';
 
@@ -33,7 +36,7 @@ class NRouterDelegate<T> extends RouterDelegate<RouteInformation>
     print('init NRouterDelegate');
   }
 
-  IList<Uri> history = const IListConst([]);
+  IList<(Uri, String)> history = const IListConst([]);
   int currentIndex = 0;
   final n.ParserAndBuilder<T, Uri> parserAndBuilder;
   Widget Function(T, BuildContext) builder;
@@ -73,10 +76,10 @@ class NRouterDelegate<T> extends RouterDelegate<RouteInformation>
             ),
           ),
         );
-      default:
+      case (final current, _):
         return NRouter(
           routerDelegate: this,
-          child: builder(parserAndBuilder.parser(history.lastOrNull!), context),
+          child: builder(parserAndBuilder.parser(current), context),
         );
     }
   }
@@ -92,38 +95,42 @@ class NRouterDelegate<T> extends RouterDelegate<RouteInformation>
 
   @override
   Future<void> setNewRoutePath(RouteInformation configuration) async {
-    print(('called setNewRoutePath', configuration, configuration.state));
-    if (isSameLast(configuration.uri)) {
-      print(('ignored in setNewRoutePath', history.lastOrNull, configuration));
+    final nextIndex = _getMatchedIndex(configuration);
+    if (nextIndex != null) {
+      currentIndex = nextIndex;
       return;
     }
-    final state = configuration.state;
-    if (state is int) {
-      currentIndex = state;
-    } else {
-      currentIndex = history.length;
-    }
-    if (state is int && state < history.length) {
-      for (final entry in history.reversed) {
-        if (entry == configuration.uri) {
-          return;
-        }
-        if (history.length > 1) {
-          history = history.removeLast();
-        }
-      }
+    _setNext(
+        configuration.uri,
+        configuration.state is String
+            ? configuration.state as String
+            : const Uuid().v4());
+  }
 
-      return;
+  int? _getMatchedIndex(RouteInformation info) {
+    for (final entry in history.indexed) {
+      if (entry.$2.$1 == info.uri && entry.$2.$2 == info.state) {
+        return entry.$1;
+      }
     }
-    history = history.add(configuration.uri);
+    return null;
+  }
+
+  void _setNext(Uri uri, String state) {
+    history = IList([
+      ...history.sublist(0, min(currentIndex + 1, history.length)),
+      (uri, state),
+    ]);
+    currentIndex = history.length - 1;
   }
 
   @override
   RouteInformation get currentConfiguration {
     print(('called currentConfiguration', history));
+    final current = history.elementAtOrNull(currentIndex);
     return RouteInformation(
-      uri: history.elementAtOrNull(currentIndex) ?? Uri.parse('/'),
-      state: currentIndex,
+      uri: current?.$1 ?? Uri.parse('/'),
+      state: current?.$2,
     );
   }
 
@@ -141,7 +148,7 @@ class NRouterDelegate<T> extends RouterDelegate<RouteInformation>
       print(('ignored in push', history.lastOrNull, newUri));
       return;
     }
-    history = history.add(parserAndBuilder.builder(route));
+    _setNext(parserAndBuilder.builder(route), const Uuid().v4());
     notifyListeners();
   }
 
@@ -150,7 +157,10 @@ class NRouterDelegate<T> extends RouterDelegate<RouteInformation>
       history = history.removeLast();
     }
     final newUri = parserAndBuilder.builder(route);
-    history = history.add(newUri);
+    history = IList([
+      ...history.sublist(0, min(currentIndex + 1, history.length)),
+      (newUri, const Uuid().v4()),
+    ]);
 
     print(('in replace Router.neglect', history));
     notifyListeners();
@@ -159,7 +169,6 @@ class NRouterDelegate<T> extends RouterDelegate<RouteInformation>
   void pop() {
     if (canPop()) {
       historyBack();
-      // history = history.removeLast();
       currentIndex = currentIndex - 1;
       notifyListeners();
     }
