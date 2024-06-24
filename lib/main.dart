@@ -26,9 +26,9 @@ class MyApp extends StatelessWidget {
           SampleUser() => location,
           SampleSearch() => location,
         },
+        debug: true,
       ),
       routeInformationParser: n.NRouterRouteInformationParser(),
-      // backButtonDispatcher: ?,
     );
   }
 }

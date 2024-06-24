@@ -32,13 +32,17 @@ class NRouterDelegate<T> extends RouterDelegate<RouteInformation>
   NRouterDelegate({
     required this.parserAndBuilder,
     required this.builder,
+    this.debug = false,
   }) {
-    print('init NRouterDelegate');
+    if (debug) {
+      print('init NRouterDelegate');
+    }
   }
 
-  IList<(Uri, String)> history = const IListConst([]);
+  IList<({String state, Uri uri})> history = const IListConst([]);
   int currentIndex = 0;
   final n.ParserAndBuilder<T, Uri> parserAndBuilder;
+  final bool debug;
   Widget Function(T, BuildContext) builder;
   late void Function() cancelListenPopEvent;
 
@@ -50,24 +54,17 @@ class NRouterDelegate<T> extends RouterDelegate<RouteInformation>
 
   @override
   Widget build(BuildContext context) {
-    print((
-      'called build',
-      history.indexed
-          .map((entry) =>
-              entry.$2.toString() + (entry.$1 == currentIndex ? ' <' : ''))
-          .safeJoin('\n')
-    ));
+    if (debug) {
+      print(
+        history.indexed
+            .map((entry) =>
+                '${entry.$2.state} ${entry.$2.uri}${entry.$1 == currentIndex ? ' <' : ''}')
+            .safeJoin('\n'),
+      );
+    }
 
     switch (history.elementAtOrNull(currentIndex)) {
       case null:
-        // WidgetsBinding.instance.addPostFrameCallback((_) {
-        //   switch (locationHref()) {
-        //     case final uri?:
-        //       setNewRoutePath(uri);
-        //       notifyListeners();
-        //       break;
-        //   }
-        // });
         return NRouter(
           routerDelegate: this,
           child: const Scaffold(
@@ -76,17 +73,16 @@ class NRouterDelegate<T> extends RouterDelegate<RouteInformation>
             ),
           ),
         );
-      case (final current, _):
+      case final current:
         return NRouter(
           routerDelegate: this,
-          child: builder(parserAndBuilder.parser(current), context),
+          child: builder(parserAndBuilder.parser(current.uri), context),
         );
     }
   }
 
   @override
   Future<bool> popRoute() async {
-    print(('called popRoute', history));
     if (history.isNotEmpty) {
       history = history.removeLast();
     }
@@ -109,7 +105,7 @@ class NRouterDelegate<T> extends RouterDelegate<RouteInformation>
 
   int? _getMatchedIndex(RouteInformation info) {
     for (final entry in history.indexed) {
-      if (entry.$2.$1 == info.uri && entry.$2.$2 == info.state) {
+      if (entry.$2.uri == info.uri && entry.$2.state == info.state) {
         return entry.$1;
       }
     }
@@ -119,36 +115,26 @@ class NRouterDelegate<T> extends RouterDelegate<RouteInformation>
   void _setNext(Uri uri, String state) {
     history = IList([
       ...history.sublist(0, min(currentIndex + 1, history.length)),
-      (uri, state),
+      (uri: uri, state: state),
     ]);
     currentIndex = history.length - 1;
   }
 
   @override
   RouteInformation get currentConfiguration {
-    print(('called currentConfiguration', history));
     final current = history.elementAtOrNull(currentIndex);
     return RouteInformation(
-      uri: current?.$1 ?? Uri.parse('/'),
-      state: current?.$2,
+      uri: current?.uri ?? Uri.parse('/'),
+      state: current?.state,
     );
   }
 
-  // @override
-  // Future<void> setInitialRoutePath(Uri configuration) {
-  //   print(('called setInitialRoutePath', configuration));
-  //   history = IList([configuration]);
-  //   return super.setInitialRoutePath(configuration);
-  // }
-
   void push(T route) {
-    print(('called push', route));
-    final newUri = parserAndBuilder.builder(route);
-    if (isSameLast(newUri)) {
-      print(('ignored in push', history.lastOrNull, newUri));
+    final nextUri = parserAndBuilder.builder(route);
+    if (nextUri == history.elementAtOrNull(currentIndex)?.uri) {
       return;
     }
-    _setNext(parserAndBuilder.builder(route), const Uuid().v4());
+    _setNext(nextUri, const Uuid().v4());
     notifyListeners();
   }
 
@@ -159,10 +145,9 @@ class NRouterDelegate<T> extends RouterDelegate<RouteInformation>
     final newUri = parserAndBuilder.builder(route);
     history = IList([
       ...history.sublist(0, min(currentIndex + 1, history.length)),
-      (newUri, const Uuid().v4()),
+      (uri: newUri, state: const Uuid().v4()),
     ]);
 
-    print(('in replace Router.neglect', history));
     notifyListeners();
   }
 
@@ -177,13 +162,8 @@ class NRouterDelegate<T> extends RouterDelegate<RouteInformation>
   bool canPop() {
     return 0 < currentIndex;
   }
-
-  bool isSameLast(Uri uri) {
-    return history.elementAtOrNull(currentIndex) == uri;
-  }
 }
 
-// ここの部分を riverpod を利用する形にしても良いかも
 class NRouter<T> extends InheritedWidget {
   const NRouter({
     super.key,
