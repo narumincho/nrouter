@@ -1,5 +1,6 @@
 import 'package:fast_immutable_collections/fast_immutable_collections.dart';
 import 'package:flutter/material.dart';
+import 'package:narumincho_util/narumincho_util.dart';
 import 'package:nrouter/no_web.dart'
     // https://dart.dev/interop/js-interop/package-web#conditional-imports
     if (dart.library.js_interop) 'package:nrouter/web.dart';
@@ -29,22 +30,14 @@ class NRouterDelegate<T> extends RouterDelegate<RouteInformation>
     required this.parserAndBuilder,
     required this.builder,
   }) {
-    cancelListenPopEvent = listenLocationChange((uri, state) {
-      print('on pop $uri $state');
-      if (state != null) {
-        if (state < history.length) {
-          nextIsBrowserBack = true;
-        }
-      }
-    });
     print('init NRouterDelegate');
   }
 
   IList<Uri> history = const IListConst([]);
+  int currentIndex = 0;
   final n.ParserAndBuilder<T, Uri> parserAndBuilder;
   Widget Function(T, BuildContext) builder;
   late void Function() cancelListenPopEvent;
-  bool nextIsBrowserBack = false;
 
   @override
   void dispose() {
@@ -54,9 +47,15 @@ class NRouterDelegate<T> extends RouterDelegate<RouteInformation>
 
   @override
   Widget build(BuildContext context) {
-    print(('called build', history));
+    print((
+      'called build',
+      history.indexed
+          .map((entry) =>
+              entry.$2.toString() + (entry.$1 == currentIndex ? ' <' : ''))
+          .safeJoin('\n')
+    ));
 
-    switch (history.lastOrNull) {
+    switch (history.elementAtOrNull(currentIndex)) {
       case null:
         // WidgetsBinding.instance.addPostFrameCallback((_) {
         //   switch (locationHref()) {
@@ -93,13 +92,18 @@ class NRouterDelegate<T> extends RouterDelegate<RouteInformation>
 
   @override
   Future<void> setNewRoutePath(RouteInformation configuration) async {
-    print(('called setNewRoutePath', configuration, nextIsBrowserBack));
+    print(('called setNewRoutePath', configuration, configuration.state));
     if (isSameLast(configuration.uri)) {
       print(('ignored in setNewRoutePath', history.lastOrNull, configuration));
       return;
     }
-    if (nextIsBrowserBack) {
-      nextIsBrowserBack = false;
+    final state = configuration.state;
+    if (state is int) {
+      currentIndex = state;
+    } else {
+      currentIndex = history.length;
+    }
+    if (state is int && state < history.length) {
       for (final entry in history.reversed) {
         if (entry == configuration.uri) {
           return;
@@ -118,8 +122,8 @@ class NRouterDelegate<T> extends RouterDelegate<RouteInformation>
   RouteInformation get currentConfiguration {
     print(('called currentConfiguration', history));
     return RouteInformation(
-      uri: history.lastOrNull ?? Uri.parse('/'),
-      state: history.length - 1,
+      uri: history.elementAtOrNull(currentIndex) ?? Uri.parse('/'),
+      state: currentIndex,
     );
   }
 
@@ -154,17 +158,19 @@ class NRouterDelegate<T> extends RouterDelegate<RouteInformation>
 
   void pop() {
     if (canPop()) {
-      history = history.removeLast();
+      historyBack();
+      // history = history.removeLast();
+      currentIndex = currentIndex - 1;
       notifyListeners();
     }
   }
 
   bool canPop() {
-    return history.length > 1;
+    return 0 < currentIndex;
   }
 
   bool isSameLast(Uri uri) {
-    return history.lastOrNull == uri;
+    return history.elementAtOrNull(currentIndex) == uri;
   }
 }
 

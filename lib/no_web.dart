@@ -9,6 +9,8 @@ void historyReplaceState(Uri uri) {
   print('called replace in no_web');
 }
 
+void historyBack() {}
+
 Future<void> Function() listenLocationChange(
     void Function(Uri, num?) listener) {
   print('called listen in no_web');

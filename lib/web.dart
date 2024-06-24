@@ -11,6 +11,10 @@ void historyReplaceState(Uri uri) {
   window.history.replaceState(null, '', uri.toString());
 }
 
+void historyBack() {
+  window.history.back();
+}
+
 Future<void> Function() listenLocationChange(
     void Function(Uri, num?) listener) {
   final subscription = window.onPopState.listen((event) {
